@@ -2,52 +2,65 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบบันทึกผลการปฏิบัติงาน รายวัน-รายเดือน (Firebase Cloud Version)</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1300px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2, h3 { color: #1a365d; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; margin-bottom: 30px; }
-        .card { background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; margin-bottom: 25px; }
-        label { font-weight: bold; display: block; margin-bottom: 8px; color: #4a5568; }
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; margin: 0; padding: 12px; color: #333; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        .btn-prime { background-color: #3182ce; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        h2 { color: #1a365d; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 20px; }
+        h3 { color: #1a365d; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 16px; }
+        p { font-size: 14px; }
+
+        /* การจัด Layout รองรับ Desktop / iPad / iPhone */
+        .grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; margin-bottom: 30px; }
+        
+        /* สลับฝั่งปุ่มและหัวข้อในส่วนประวัติให้แสดงผลดีขึ้นบน Mobile */
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+        
+        .card { background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; margin-bottom: 25px; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #4a5568; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 15px; -webkit-appearance: none; appearance: none; background-color: #fff; }
+        
+        /* สไตล์ปุ่มแบบจิ้มง่ายบนมือถือ */
+        .btn-prime { background-color: #3182ce; color: white; border: none; padding: 14px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-prime:hover { background-color: #2b6cb0; }
         .btn-prime:disabled { background-color: #cbd5e0 !important; color: #a0aec0 !important; cursor: not-allowed; }
         
-        .btn-sheet { background-color: #0f9d58; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 10px;}
+        .btn-sheet { background-color: #0f9d58; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
         .btn-sheet:hover { background-color: #0b8043; }
-        .btn-danger { background-color: #e53e3e; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px;}
+        .btn-danger { background-color: #e53e3e; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
         .btn-danger:hover { background-color: #c53030; }
         
-        .btn-action { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 2px; }
+        .btn-action { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 2px; display: inline-flex; align-items: center; }
         .btn-edit { background-color: #ecc94b; color: #744210; }
         .btn-edit:hover { background-color: #d69e2e; }
         .btn-delete { background-color: #fed7d7; color: #9b2c2c; }
         .btn-delete:hover { background-color: #feb2b2; }
 
         .holiday-manager { background-color: #fff5f5; border: 1px solid #fed7d7; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .holiday-tag { display: inline-block; background-color: #e53e3e; color: white; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin: 3px; font-weight: bold; letter-spacing: 0.5px; }
+        .holiday-form-group { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .holiday-tag { display: inline-block; background-color: #e53e3e; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin: 3px; font-weight: bold; letter-spacing: 0.5px; }
         .holiday-tag i { cursor: pointer; margin-left: 6px; }
-        .holiday-tag i:hover { color: #fed7d7; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        /* รองรับการใช้นิ้วปัดซ้าย-ขวาบน iPhone/iPad */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; min-width: 600px; }
         th, td { border: 1px solid #cbd5e0; padding: 10px; text-align: center; }
         th { background-color: #ebf8ff; color: #2b6cb0; }
         .text-left { text-align: left; }
-        .badge { background-color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #4a5568; }
+        .badge { background-color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #4a5568; white-space: nowrap; }
         .matched { background-color: #c6f6d5; color: #22543d; }
-        .scroll-table { overflow-x: auto; margin-top: 15px; }
-        .status-save { color: #2b6cb0; font-weight: bold; text-align: right; font-size: 14px; margin-bottom: 15px; }
         
-        .summary-box-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
-        .summary-box { padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
+        /* สไตล์ตารางเลื่อนและตรึงคอลัมน์แรก */
+        .scroll-table { overflow-x: auto; margin-top: 15px; width: 100%; -webkit-overflow-scrolling: touch; }
+        .status-save { color: #2b6cb0; font-weight: bold; text-align: right; font-size: 13px; margin-bottom: 15px; }
+        
+        .summary-box-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .summary-box { padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; font-size: 14px; }
         .bg-assigned { background: linear-gradient(135deg, #4299e1, #3182ce); }
         .bg-delivered { background: linear-gradient(135deg, #48bb78, #38a169); }
-        .summary-number { font-size: 28px; font-weight: 800; display: block; margin-top: 5px; }
+        .summary-number { font-size: 24px; font-weight: 800; display: block; margin-top: 5px; }
 
         .holiday-cell { background-color: #cbd5e0 !important; color: #718096; font-weight: bold; }
         .holiday-bg { background-color: #fffaf0; }
@@ -55,47 +68,78 @@
         .total-row { background-color: #e2e8f0; font-weight: bold; color: #1a365d; }
         .total-row td { border-top: 2px solid #cbd5e0; border-bottom: 2px solid #cbd5e0; }
 
-        .month-tabs-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0 5px 0; padding: 10px; background-color: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .month-tab { background-color: #fff; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; color: #4a5568; transition: all 0.2s; }
-        .month-tab:hover { background-color: #edf2f7; color: #2b6cb0; border-color: #4299e1; }
+        .month-tabs-container { display: flex; flex-wrap: wrap; gap: 6px; margin: 15px 0 5px 0; padding: 10px; background-color: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .month-tab { background-color: #fff; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; color: #4a5568; transition: all 0.2s; white-space: nowrap; }
         .month-tab.active { background-color: #3182ce; color: white; border-color: #3182ce; box-shadow: 0 2px 4px rgba(49, 130, 206, 0.3); }
         
-        .status-alert-box { padding: 12px 15px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .status-alert-box { padding: 12px 15px; border-radius: 6px; font-weight: bold; font-size: 13px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .alert-danger-mode { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
         .alert-success-mode { background-color: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
 
-        .sticky-table { border-collapse: separate; border-spacing: 0; }
+        /* ตรึงคอลัมน์แรกให้คงที่ตอนปัดจอขวา */
+        .sticky-table { border-collapse: separate; border-spacing: 0; min-width: 1200px; }
         .sticky-table th, .sticky-table td { border: 1px solid #cbd5e0; }
         .freeze-col { position: sticky; left: 0; z-index: 4; background-color: #ebf8ff !important; box-shadow: 2px 0px 4px rgba(0,0,0,0.1); }
-        .sticky-table td.freeze-col { z-index: 2; background-color: #fafafa !important; box-shadow: 2px 0px 4px rgba(0,0,0,0.05); }
+        .sticky-table td.freeze-col { z-index: 2; background-color: #fafafa !important; box-shadow: 2px 0px 4px rgba(0,0,0,0.05); white-space: normal; }
         .sticky-table .total-row td.freeze-col { z-index: 3; background-color: #e2e8f0 !important; }
 
+        /* ปรับสไตล์ Dropdown Filter วันที่ */
         .excel-th-filter { display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; }
-        .excel-filter-btn { background: none; border: none; color: #2b6cb0; cursor: pointer; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
-        .excel-filter-btn:hover { background-color: #cbd5e0; color: #1a365d; }
+        .excel-filter-btn { background: none; border: none; color: #2b6cb0; cursor: pointer; padding: 4px 8px; border-radius: 3px; font-size: 13px; }
         .excel-filter-btn.active-filter { color: #e53e3e !important; }
         .excel-dropdown { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background: white; border: 1px solid #cbd5e0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; text-align: left; min-width: 180px; max-height: 250px; overflow-y: auto; padding: 8px; margin-top: 5px; }
-        .excel-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; font-size: 12px; cursor: pointer; color: #333; }
-        .excel-dropdown-item:hover { background-color: #edf2f7; }
+        .excel-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px; font-size: 13px; cursor: pointer; color: #333; }
         .excel-dropdown-item input[type="checkbox"] { width: auto; margin-bottom: 0; cursor: pointer; }
         .excel-dropdown-divider { height: 1px; background-color: #e2e8f0; margin: 5px 0; }
 
-        .history-filter-area { display: flex; align-items: center; gap: 10px; background-color: #f7fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; }
-        .select-history-month { padding: 6px 12px; font-size: 13px; border-radius: 5px; border: 1px solid #cbd5e0; background-color: #fff; width: auto; margin-bottom: 0; font-weight: bold; color: #2b6cb0; cursor: pointer; }
+        .history-filter-area { display: flex; align-items: center; gap: 10px; background-color: #f7fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; flex-wrap: wrap; }
+        .select-history-month { padding: 8px 12px; font-size: 13px; border-radius: 5px; border: 1px solid #cbd5e0; background-color: #fff; width: auto; margin-bottom: 0; font-weight: bold; color: #2b6cb0; cursor: pointer; }
+
+        /* ตารางล่างสุด */
+        #bottomDailySummaryTable { min-width: 800px; }
+
+        /* ========================================== */
+        /* 📱 MEDIA QUERIES สำหรับ iPhone & iPad */
+        /* ========================================== */
+        @media (max-width: 1024px) {
+            /* สำหรับ iPad และแท็บเล็ต */
+            .grid { grid-template-columns: 1fr; } /* ปรับเป็น 1 คอลัมน์แนวตั้ง */
+            .container { padding: 15px; }
+        }
+
+        @media (max-width: 767px) {
+            /* สำหรับ iPhone และสมาร์ตโฟนแนวตั้ง */
+            body { padding: 6px; }
+            .container { padding: 12px; border-radius: 6px; }
+            h2 { font-size: 16px; }
+            h3 { font-size: 14px; }
+            
+            .summary-box-container { grid-template-columns: 1fr; gap: 10px; } /* สรุปยอดเป็นกล่องเดี่ยวแนวตั้ง */
+            .summary-number { font-size: 22px; }
+            
+            .holiday-form-group { flex-direction: column; }
+            .holiday-form-group .btn-prime { width: 100%; }
+            
+            .history-header { flex-direction: column; align-items: flex-start; }
+            .history-header div { display: flex; width: 100%; gap: 8px; }
+            .history-header div button { flex: 1; justify-content: center; padding: 12px 10px; font-size: 13px; }
+            
+            /* ซ่อนไอคอนบางส่วนในตารางเมื่อดูบนมือถือเพื่อลดความแน่น */
+            .btn-action { padding: 6px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <center>
-        <h2><i class="fa-solid fa-cloud"></i> ระบบบันทึกงานรายวันเชื่อมโยงรายเดือน (ระบบฐานข้อมูล Cloud Real-time)</h2>
-        <p>กลุ่มพัฒนาระบบบริหาร กระทรวงการท่องเที่ยวและกีฬา</p>
+        <h2><i class="fa-solid fa-cloud"></i> ระบบบันทึกงานรายวันเชื่อมโยงรายเดือน</h2>
+        <p style="margin: 5px 0; color:#4a5568;">กลุ่มพัฒนาระบบบริหาร กระทรวงการท่องเที่ยวและกีฬา</p>
     </center>
 
     <div class="status-save" id="saveStatus"><i class="fa-solid fa-sync fa-spin"></i> กำลังเชื่อมต่อระบบฐานข้อมูล Cloud...</div>
 
     <div class="grid">
-        <!-- ฝั่งบันทึกงานรายวัน -->
         <div class="card">
             <h3><i class="fa-solid fa-pen-to-square"></i> บันทึกผลการปฏิบัติงานรายวัน</h3>
             <input type="hidden" id="editKey" value="-1">
@@ -110,8 +154,8 @@
 
             <div class="holiday-manager">
                 <label style="color: #c53030; font-size: 13px;"><i class="fa-solid fa-calendar-minus"></i> กำหนดวันหยุดราชการเพิ่มเติมประจำเดือน</label>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="date" id="customHolidayInput" style="margin-bottom: 0; padding: 6px;">
+                <div class="holiday-form-group">
+                    <input type="date" id="customHolidayInput" style="margin-bottom: 0; padding: 8px; flex: 1;">
                     <button class="btn-prime" style="background-color: #e53e3e; width: auto; white-space: nowrap; padding: 0 15px; font-size: 14px;" onclick="addCustomHoliday()"><i class="fa-solid fa-plus"></i> เพิ่มวันหยุด</button>
                 </div>
                 <div id="holidayTagsContainer"></div>
@@ -149,18 +193,17 @@
             <button class="btn-prime" id="btnSubmit" onclick="saveTaskRow()"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกขึ้นระบบ Cloud</button>
         </div>
 
-        <!-- รายการบันทึกประวัติทั้งหมด -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="history-header">
                 <h3><i class="fa-solid fa-list-check"></i> รายการบันทึกบน Cloud</h3>
                 <div>
-                    <button class="btn-sheet" onclick="exportToGoogleSheets()"><i class="fa-solid fa-file-excel"></i> ส่งออกข้อมูลเดือนที่เลือก</button>
+                    <button class="btn-sheet" onclick="exportToGoogleSheets()"><i class="fa-solid fa-file-excel"></i> ส่งออกข้อมูล</button>
                     <button class="btn-danger" onclick="clearAllData()"><i class="fa-solid fa-trash-can"></i> ล้างทั้งหมด</button>
                 </div>
             </div>
 
             <div class="history-filter-area">
-                <span style="font-size: 13px; font-weight: bold; color: #4a5568;"><i class="fa-solid fa-filter"></i> เลือกเดือนเพื่อดูประวัติ:</span>
+                <span style="font-size: 13px; font-weight: bold; color: #4a5568;"><i class="fa-solid fa-filter"></i> เลือกเดือนดูประวัติ:</span>
                 <select class="select-history-month" id="historyMonthFilter" onchange="renderDailyTableOnly()">
                 </select>
             </div>
@@ -169,12 +212,12 @@
                 <table id="dailyTable">
                     <thead>
                         <tr>
-                            <th>วันที่</th>
-                            <th>งานที่มอบหมาย</th>
-                            <th>รายเดือน</th>
-                            <th>มอบ</th>
-                            <th>ส่ง</th>
-                            <th style="min-width: 110px;">จัดการ</th>
+                            <th style="width: 90px;">วันที่</th>
+                            <th>งานที่ได้รับมอบหมาย</th>
+                            <th style="width: 70px;">รายเดือน</th>
+                            <th style="width: 40px;">มอบ</th>
+                            <th style="width: 40px;">ส่ง</th>
+                            <th style="width: 100px;">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="dailyTableBody">
@@ -184,7 +227,6 @@
         </div>
     </div>
 
-    <!-- สรุปรายเดือน -->
     <div class="card">
         <h3><i class="fa-solid fa-chart-pie"></i> 1. สรุปผลปริมาณงานตลอดทั้งเดือน แยกตามหัวข้อภาระงาน <span id="monthlyTitleText"></span></h3>
         
@@ -208,7 +250,7 @@
             <table id="monthlySummaryTable" class="sticky-table">
                 <thead>
                     <tr id="headerRowDays">
-                        <th rowspan="2" class="freeze-col" style="min-width: 320px; text-align: left; padding-left: 15px;">ภาระงานที่มอบหมาย / ประจำวัน</th>
+                        <th rowspan="2" class="freeze-col" style="min-width: 260px; text-align: left; padding-left: 15px;">ภาระงานที่มอบหมาย / ประจำวัน</th>
                     </tr>
                     <tr id="headerRowStatus"></tr>
                 </thead>
@@ -217,7 +259,6 @@
         </div>
     </div>
 
-    <!-- ตารางสรุปรวมรายวันส่วนล่างสุด -->
     <div class="card">
         <h3><i class="fa-solid fa-calendar-days"></i> 2. ตารางสรุปรวมผลการปฏิบัติงานแยกเป็นรายวันประจำเดือนที่เลือก</h3>
         
@@ -225,7 +266,7 @@
             <table id="bottomDailySummaryTable">
                 <thead>
                     <tr>
-                        <th style="width: 160px; min-width: 160px;">
+                        <th style="width: 140px; min-width: 140px;">
                             <div class="excel-th-filter">
                                 <span>วันที่ปฏิบัติงาน</span>
                                 <button class="excel-filter-btn" id="excelFilterBtn" onclick="toggleExcelDropdown(event)">
@@ -234,10 +275,10 @@
                                 <div class="excel-dropdown" id="excelFilterDropdown"></div>
                             </div>
                         </th>
-                        <th style="width: 180px;">เชื่อมโยงข้อรายงานรายเดือน</th>
+                        <th style="width: 160px;">เชื่อมโยงข้อรายงานรายเดือน</th>
                         <th>รายละเอียดภาระงานที่ปฏิบัติจริง</th>
-                        <th style="width: 90px;">งานที่มอบ</th>
-                        <th style="width: 90px;">ส่งมอบ</th>
+                        <th style="width: 70px;">งานที่มอบ</th>
+                        <th style="width: 70px;">ส่งมอบ</th>
                     </tr>
                 </thead>
                 <tbody id="bottomDailySummaryBody"></tbody>
@@ -697,9 +738,6 @@
         
         document.getElementById('monthlyTitleText').innerText = `(${monthNamesThai[month]} พ.ศ. ${year + 543})`;
 
-        // ==========================================
-        // 🛠️ ส่วนที่แก้ไข: ปรับรูปแบบแสดงผลป้ายวันหยุดเป็น วัน/เดือน/ปี พ.ศ.
-        // ==========================================
         const container = document.getElementById('holidayTagsContainer');
         container.innerHTML = '';
         const filteredHolidays = customHolidays.filter(d => {
@@ -711,12 +749,11 @@
             container.innerHTML = '<span style="font-size:12px; color:#a0aec0;">ยังไม่มีวันหยุดพิเศษที่กำหนดเองในเดือนนี้</span>';
         } else {
             filteredHolidays.forEach(dateStr => {
-                const parts = dateStr.split('-'); // ["YYYY", "MM", "DD"]
+                const parts = dateStr.split('-'); 
                 const day = parts[2];
                 const mStr = parts[1];
                 const yThaiShort = parseInt(parts[0]) + 543;
                 
-                // จัดเรียงฟอร์แมตป้ายวันหยุดเป็น วัน/เดือน/ปี พ.ศ. เช่น 05/07/2569
                 const formattedThaiTag = `${day}/${mStr}/${yThaiShort}`;
                 
                 container.innerHTML += `<span class="holiday-tag">${formattedThaiTag} <i class="fa-solid fa-circle-xmark" onclick="removeCustomHoliday('${dateStr}')"></i></span>`;
@@ -758,7 +795,7 @@
 
         const headerDays = document.getElementById('headerRowDays');
         const headerStatus = document.getElementById('headerRowStatus');
-        headerDays.innerHTML = '<th rowspan="2" class="freeze-col" style="min-width: 320px; text-align: left; padding-left: 15px;">ภาระงานที่มอบหมาย / ประจำวัน</th>';
+        headerDays.innerHTML = '<th rowspan="2" class="freeze-col" style="min-width: 260px; text-align: left; padding-left: 15px;">ภาระงานที่มอบหมาย / ประจำวัน</th>';
         headerStatus.innerHTML = '';
         for(let i = 1; i <= daysInMonth; i++) {
             const isHoliday = holidays.includes(i);
