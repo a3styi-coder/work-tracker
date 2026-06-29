@@ -76,6 +76,12 @@
         .sticky-table td.freeze-col { z-index: 2; background-color: #fafafa !important; box-shadow: 2px 0px 4px rgba(0,0,0,0.05); white-space: normal; }
         .sticky-table .total-row td.freeze-col { z-index: 3; background-color: #e2e8f0 !important; }
 
+        /* [เพิ่มส่วนจัดการสีใหม่] ระบบสลับสีคอลลัมน์วันคู่-คี่ และระบบเมาส์ชี้ไฮไลต์ทั้งแถว */
+        .even-day-col { background-color: #f8fafc; } /* สีพื้นหลังสำหรับวันคู่จางมาก ๆ */
+        .sticky-table tbody tr:hover td { background-color: #ebf8ff !important; } /* ไฮไลต์แถวเมื่อเมาส์ชี้เป็นสีฟ้าอ่อน */
+        .sticky-table tbody tr:hover td.freeze-col { background-color: #e1effe !important; } /* ไฮไลต์ส่วนข้อความด้านซ้ายให้ล้อไปด้วยกัน */
+        .sticky-table tbody tr:hover td.holiday-cell { background-color: #cbd5e0 !important; } /* วันหยุดยังคงเป็นสีทึบเพื่อไม่ให้สับสน */
+
         .excel-th-filter { display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; }
         .excel-filter-btn { background: none; border: none; color: #2b6cb0; cursor: pointer; padding: 4px 8px; border-radius: 3px; font-size: 13px; }
         .excel-filter-btn.active-filter { color: #e53e3e !important; }
@@ -88,6 +94,7 @@
         .select-history-month { padding: 8px 12px; font-size: 13px; border-radius: 5px; border: 1px solid #cbd5e0; background-color: #fff; width: auto; margin-bottom: 0; font-weight: bold; color: #2b6cb0; cursor: pointer; }
 
         #bottomDailySummaryTable { min-width: 800px; }
+        #bottomDailySummaryTable tbody tr:hover { background-color: #f8fafc; }
     </style>
 </head>
 <body>
@@ -761,8 +768,10 @@
         for(let i = 1; i <= daysInMonth; i++) {
             const isHoliday = holidays.includes(i);
             const holidayClass = isHoliday ? 'class="holiday-cell"' : '';
-            headerDays.innerHTML += `<th colspan="2" ${holidayClass}>วันที่ ${i}</th>`;
-            headerStatus.innerHTML += `<th ${holidayClass}>มอบ</th><th ${holidayClass}>ส่ง</th>`;
+            const evenDayClass = (!isHoliday && i % 2 === 0) ? 'class="even-day-col"' : ''; /* คอลัมน์วันที่ส่วนบน (วันคู่) */
+            
+            headerDays.innerHTML += `<th colspan="2" ${holidayClass || evenDayClass}>วันที่ ${i}</th>`;
+            headerStatus.innerHTML += `<th ${holidayClass || evenDayClass}>มอบ</th><th ${holidayClass || evenDayClass}>ส่ง</th>`;
         }
 
         const tbody = document.getElementById('monthlyTableBody');
@@ -775,7 +784,9 @@
                 } else {
                     let assignedVal = monthlyMatrix[d][t].assigned;
                     let deliveredVal = monthlyMatrix[d][t].delivered;
-                    rowHTML += `<td>${assignedVal || ' '}</td><td>${deliveredVal || ' '}</td>`;
+                    const colStyleClass = (d % 2 === 0) ? ' class="even-day-col"' : ''; /* เช็กเพื่อเติมคลาสวันคู่ */
+                    
+                    rowHTML += `<td${colStyleClass}>${assignedVal || ' '}</td><td${colStyleClass}>${deliveredVal || ' '}</td>`;
                 }
             }
             rowHTML += `</tr>`;
@@ -789,8 +800,10 @@
             } else {
                 let dayAssigned = dailyTotals[d].assigned;
                 let dayDelivered = dailyTotals[d].delivered;
-                totalRowHTML += `<td style="${dayAssigned > 0 ? 'color: #3182ce;' : ''}">${dayAssigned || '0'}</td>`;
-                totalRowHTML += `<td style="${dayDelivered > 0 ? 'color: #38a169;' : ''}">${dayDelivered || '0'}</td>`;
+                const colStyleClass = (d % 2 === 0) ? ' even-day-col' : ''; /* คลาสวันคู่แถวผลรวม */
+                
+                totalRowHTML += `<td class="${colStyleClass}" style="${dayAssigned > 0 ? 'color: #3182ce;' : ''}">${dayAssigned || '0'}</td>`;
+                totalRowHTML += `<td class="${colStyleClass}" style="${dayDelivered > 0 ? 'color: #38a169;' : ''}">${dayDelivered || '0'}</td>`;
             }
         }
         totalRowHTML += `</tr>`;
