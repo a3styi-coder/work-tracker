@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกผลการปฏิบัติงาน รายวัน-รายเดือน (Firebase Cloud Version)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2, h3 { color: #1a365d; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; margin-bottom: 30px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; margin-bottom: 25px; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #4a5568; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        
+        .btn-prime { background-color: #3182ce; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        .btn-prime:hover { background-color: #2b6cb0; }
+        .btn-prime:disabled { background-color: #cbd5e0 !important; color: #a0aec0 !important; cursor: not-allowed; }
+        
+        .btn-sheet { background-color: #0f9d58; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 10px;}
+        .btn-sheet:hover { background-color: #0b8043; }
+        .btn-danger { background-color: #e53e3e; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px;}
+        .btn-danger:hover { background-color: #c53030; }
+        
+        .btn-action { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 2px; }
+        .btn-edit { background-color: #ecc94b; color: #744210; }
+        .btn-edit:hover { background-color: #d69e2e; }
+        .btn-delete { background-color: #fed7d7; color: #9b2c2c; }
+        .btn-delete:hover { background-color: #feb2b2; }
+
+        .holiday-manager { background-color: #fff5f5; border: 1px solid #fed7d7; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .holiday-tag { display: inline-block; background-color: #e53e3e; color: white; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin: 3px; font-weight: bold; letter-spacing: 0.5px; }
+        .holiday-tag i { cursor: pointer; margin-left: 6px; }
+        .holiday-tag i:hover { color: #fed7d7; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid #cbd5e0; padding: 10px; text-align: center; }
+        th { background-color: #ebf8ff; color: #2b6cb0; }
+        .text-left { text-align: left; }
+        .badge { background-color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #4a5568; }
+        .matched { background-color: #c6f6d5; color: #22543d; }
+        .scroll-table { overflow-x: auto; margin-top: 15px; }
+        .status-save { color: #2b6cb0; font-weight: bold; text-align: right; font-size: 14px; margin-bottom: 15px; }
+        
+        .summary-box-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+        .summary-box { padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
+        .bg-assigned { background: linear-gradient(135deg, #4299e1, #3182ce); }
+        .bg-delivered { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .summary-number { font-size: 28px; font-weight: 800; display: block; margin-top: 5px; }
+
+        .holiday-cell { background-color: #cbd5e0 !important; color: #718096; font-weight: bold; }
+        .holiday-bg { background-color: #fffaf0; }
+        
+        .total-row { background-color: #e2e8f0; font-weight: bold; color: #1a365d; }
+        .total-row td { border-top: 2px solid #cbd5e0; border-bottom: 2px solid #cbd5e0; }
+
+        .month-tabs-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0 5px 0; padding: 10px; background-color: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .month-tab { background-color: #fff; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; color: #4a5568; transition: all 0.2s; }
+        .month-tab:hover { background-color: #edf2f7; color: #2b6cb0; border-color: #4299e1; }
+        .month-tab.active { background-color: #3182ce; color: white; border-color: #3182ce; box-shadow: 0 2px 4px rgba(49, 130, 206, 0.3); }
+        
+        .status-alert-box { padding: 12px 15px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .alert-danger-mode { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
+        .alert-success-mode { background-color: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+
+        .sticky-table { border-collapse: separate; border-spacing: 0; }
+        .sticky-table th, .sticky-table td { border: 1px solid #cbd5e0; }
+        .freeze-col { position: sticky; left: 0; z-index: 4; background-color: #ebf8ff !important; box-shadow: 2px 0px 4px rgba(0,0,0,0.1); }
+        .sticky-table td.freeze-col { z-index: 2; background-color: #fafafa !important; box-shadow: 2px 0px 4px rgba(0,0,0,0.05); }
+        .sticky-table .total-row td.freeze-col { z-index: 3; background-color: #e2e8f0 !important; }
+
+        .excel-th-filter { display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; }
+        .excel-filter-btn { background: none; border: none; color: #2b6cb0; cursor: pointer; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+        .excel-filter-btn:hover { background-color: #cbd5e0; color: #1a365d; }
+        .excel-filter-btn.active-filter { color: #e53e3e !important; }
+        .excel-dropdown { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background: white; border: 1px solid #cbd5e0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; text-align: left; min-width: 180px; max-height: 250px; overflow-y: auto; padding: 8px; margin-top: 5px; }
+        .excel-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; font-size: 12px; cursor: pointer; color: #333; }
+        .excel-dropdown-item:hover { background-color: #edf2f7; }
+        .excel-dropdown-item input[type="checkbox"] { width: auto; margin-bottom: 0; cursor: pointer; }
+        .excel-dropdown-divider { height: 1px; background-color: #e2e8f0; margin: 5px 0; }
+
+        .history-filter-area { display: flex; align-items: center; gap: 10px; background-color: #f7fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; }
+        .select-history-month { padding: 6px 12px; font-size: 13px; border-radius: 5px; border: 1px solid #cbd5e0; background-color: #fff; width: auto; margin-bottom: 0; font-weight: bold; color: #2b6cb0; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <center>
+        <h2><i class="fa-solid fa-cloud"></i> ระบบบันทึกงานรายวันเชื่อมโยงรายเดือน (ระบบฐานข้อมูล Cloud Real-time)</h2>
+        <p>กลุ่มพัฒนาระบบบริหาร กระทรวงการท่องเที่ยวและกีฬา</p>
+    </center>
+
+    <div class="status-save" id="saveStatus"><i class="fa-solid fa-sync fa-spin"></i> กำลังเชื่อมต่อระบบฐานข้อมูล Cloud...</div>
+
+    <div class="grid">
+        <!-- ฝั่งบันทึกงานรายวัน -->
+        <div class="card">
+            <h3><i class="fa-solid fa-pen-to-square"></i> บันทึกผลการปฏิบัติงานรายวัน</h3>
+            <input type="hidden" id="editKey" value="-1">
+            
+            <label>เลือกวันที่ปฏิบัติงาน</label>
+            <input type="date" id="workDate" onchange="handleDateChange()">
+            
+            <div id="liveDateAlertBox" class="status-alert-box alert-success-mode">
+                <i id="liveDateIcon" class="fa-solid fa-circle-check"></i> 
+                <span id="liveDateMsg">ตรวจสอบสถานะวันทำการ...</span>
+            </div>
+
+            <div class="holiday-manager">
+                <label style="color: #c53030; font-size: 13px;"><i class="fa-solid fa-calendar-minus"></i> กำหนดวันหยุดราชการเพิ่มเติมประจำเดือน</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="date" id="customHolidayInput" style="margin-bottom: 0; padding: 6px;">
+                    <button class="btn-prime" style="background-color: #e53e3e; width: auto; white-space: nowrap; padding: 0 15px; font-size: 14px;" onclick="addCustomHoliday()"><i class="fa-solid fa-plus"></i> เพิ่มวันหยุด</button>
+                </div>
+                <div id="holidayTagsContainer"></div>
+            </div>
+
+            <label>รายละเอียดงานที่ได้รับมอบหมาย</label>
+            <textarea id="taskDetail" rows="3" placeholder="เช่น สนับสนุนการจัดทำ Infographic..." oninput="autoMatchTask()"></textarea>
+
+            <label>ผลการวิเคราะห์เชื่อมโยงไป "รายงานรายเดือน"</label>
+            <select id="monthlyTaskID">
+                <option value="1">ข้อ 1: สนับสนุนการติดตามประเมินผลนโยบาย / จัดทำแผนตรวจสอบ</option>
+                <option value="2">ข้อ 2: สนับสนุนการจัดเก็บข้อมูล วิเคราะห์ ประมวลผลแผนงาน/งบประมาณ</option>
+                <option value="3">ข้อ 3: สนับสนุนการจัดทำหนังสือราชการที่เกี่ยวข้อง</option>
+                <option value="4">ข้อ 4: สนับสนุนการจัดเตรียมเอกสารประชุม ค.ต.ป.กก. / เชิญประชุม</option>
+                <option value="5">ข้อ 5: สนับสนุนงานการเงิน / ค่าใช้จ่ายเดินทาง / ยืมเงินราชการ</option>
+                <option value="6">ข้อ 6: สนับสนุนการจัดทำรายงานการสอบทาน ค.ต.ป.กก.</option>
+                <option value="7">ข้อ 7: จัดทำรายงานการประชุม วาระการประชุม ค.ต.ป.กก.</option>
+                <option value="8">ข้อ 8: สนับสนุนการจัดทำ Infographic/แผ่นพับ/แบนเนอร์/คลิปวิดีโอ</option>
+                <option value="9">ข้อ 9: ติดต่อประสานงานหน่วยงานภายในและภายนอก</option>
+                <option value="10">ข้อ 10: สนับสนุนการจัดการประชุม ค.ต.ป.กก. ร่วมกับผู้บริหาร</option>
+                <option value="11">ข้อ 11: ปฏิบัติงานหรือสนับสนุนงานอื่นๆ ที่ได้รับมอบหมาย</option>
+            </select>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>จำนวนงานที่มอบ</label>
+                    <input type="number" id="taskAssigned" value="1" min="0">
+                </div>
+                <div>
+                    <label>จำนวนงานที่ส่งมอบ</label>
+                    <input type="number" id="taskDelivered" value="1" min="0">
+                </div>
+            </div>
+
+            <button class="btn-prime" id="btnSubmit" onclick="saveTaskRow()"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกขึ้นระบบ Cloud</button>
+        </div>
+
+        <!-- รายการบันทึกประวัติทั้งหมด -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3><i class="fa-solid fa-list-check"></i> รายการบันทึกบน Cloud</h3>
+                <div>
+                    <button class="btn-sheet" onclick="exportToGoogleSheets()"><i class="fa-solid fa-file-excel"></i> ส่งออกข้อมูลเดือนที่เลือก</button>
+                    <button class="btn-danger" onclick="clearAllData()"><i class="fa-solid fa-trash-can"></i> ล้างทั้งหมด</button>
+                </div>
+            </div>
+
+            <div class="history-filter-area">
+                <span style="font-size: 13px; font-weight: bold; color: #4a5568;"><i class="fa-solid fa-filter"></i> เลือกเดือนเพื่อดูประวัติ:</span>
+                <select class="select-history-month" id="historyMonthFilter" onchange="renderDailyTableOnly()">
+                </select>
+            </div>
+
+            <div class="scroll-table" style="max-height: 420px; margin-top: 0;">
+                <table id="dailyTable">
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>งานที่มอบหมาย</th>
+                            <th>รายเดือน</th>
+                            <th>มอบ</th>
+                            <th>ส่ง</th>
+                            <th style="min-width: 110px;">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- สรุปรายเดือน -->
+    <div class="card">
+        <h3><i class="fa-solid fa-chart-pie"></i> 1. สรุปผลปริมาณงานตลอดทั้งเดือน แยกตามหัวข้อภาระงาน <span id="monthlyTitleText"></span></h3>
+        
+        <label style="margin-bottom: 2px;"><i class="fa-solid fa-pointer"></i> คลิกเลือกเดือนที่ต้องการตรวจสอบข้อมูล:</label>
+        <div class="month-tabs-container" id="monthTabs"></div>
+
+        <p style="font-size: 12px; color: #718096; margin-top: 8px;">* ช่องสีทึบ ✖ คือวันหยุดเสาร์-อาทิตย์ และวันหยุดที่คุณกำหนดเอง / <strong>ตารางด้านล่างเลื่อนไปทางขวาเพื่อดูวันที่ถัดไปได้</strong></p>
+        
+        <div class="summary-box-container">
+            <div class="summary-box bg-assigned">
+                <i class="fa-solid fa-briefcase fa-lg"></i> รวมงานที่มอบหมายในเดือนที่เลือก
+                <span class="summary-number" id="totalAssignedNum">0 ชิ้น</span>
+            </div>
+            <div class="summary-box bg-delivered">
+                <i class="fa-solid fa-circle-check fa-lg"></i> รวมงานที่ส่งมอบสำเร็จในเดือนที่เลือก
+                <span class="summary-number" id="totalDeliveredNum">0 ชิ้น</span>
+            </div>
+        </div>
+
+        <div class="scroll-table">
+            <table id="monthlySummaryTable" class="sticky-table">
+                <thead>
+                    <tr id="headerRowDays">
+                        <th rowspan="2" class="freeze-col" style="min-width: 320px; text-align: left; padding-left: 15px;">ภาระงานที่มอบหมาย / ประจำวัน</th>
+                    </tr>
+                    <tr id="headerRowStatus"></tr>
+                </thead>
+                <tbody id="monthlyTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ตารางสรุปรวมรายวันส่วนล่างสุด -->
+    <div class="card">
+        <h3><i class="fa-solid fa-calendar-days"></i> 2. ตารางสรุปรวมผลการปฏิบัติงานแยกเป็นรายวันประจำเดือนที่เลือก</h3>
+        
+        <div class="scroll-table">
+            <table id="bottomDailySummaryTable">
+                <thead>
+                    <tr>
+                        <th style="width: 160px; min-width: 160px;">
+                            <div class="excel-th-filter">
+                                <span>วันที่ปฏิบัติงาน</span>
+                                <button class="excel-filter-btn" id="excelFilterBtn" onclick="toggleExcelDropdown(event)">
+                                    <i class="fa-solid fa-filter"></i>
+                                </button>
+                                <div class="excel-dropdown" id="excelFilterDropdown"></div>
+                            </div>
+                        </th>
+                        <th style="width: 180px;">เชื่อมโยงข้อรายงานรายเดือน</th>
+                        <th>รายละเอียดภาระงานที่ปฏิบัติจริง</th>
+                        <th style="width: 90px;">งานที่มอบ</th>
+                        <th style="width: 90px;">ส่งมอบ</th>
+                    </tr>
+                </thead>
+                <tbody id="bottomDailySummaryBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyANlqiQZuPY8QOlBbAkI1MM-0VvftcyrTY",
+        authDomain: "ldd-work-tracker.firebaseapp.com",
+        databaseURL: "https://ldd-work-tracker-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "ldd-work-tracker",
+        storageBucket: "ldd-work-tracker.firebasestorage.app",
+        messagingSenderId: "411569663731",
+        appId: "1:411569663731:web:753e878a3824f53e9c5186",
+        measurementId: "G-1KMQZG1WQC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const monthlyTasks = {
+        1: { name: "1. สนับสนุนการติดตามและประเมินผลตามนโยบายรัฐบาล...", keywords: ["ติดตาม", "ประเมินผล", "นโยบาย", "แผนการตรวจสอบ"] },
+        2: { name: "2. สนับสนุนการจัดเก็บข้อมูล วิเคราะห์ ประมวลผล...", keywords: ["จัดเก็บข้อมูล", "วิเคราะห์", "ประมวลผล", "งบประมาณ", "โครงการ"] },
+        3: { name: "3. สนับสนุนการจัดทำหนังสือราชการที่เกี่ยวข้อง...", keywords: ["หนังสือราชการ", "บันทึกข้อความ", "หนังสือเชิญ", "หนังสือส่ง"] },
+        4: { name: "4. สนับสนุนการจัดเตรียมเอกสารประชุมคณะกรรมการ...", keywords: ["จัดเตรียมเอกสาร", "เตรียมประชุม", "ส่งเอกสารเชิญ", "ติดตามการตอบรับ"] },
+        5: { name: "5. สนับสนุนงานการเงิน / ประมาณการค่าใช้จ่าย...", keywords: ["การเงิน", "ประมาณการค่าใช้จ่าย", "เดินทางไปตรวจสอบ", "ยืมเงิน", "ชดใช้เงิน"] },
+        6: { name: "6. สนับสนุนการจัดทำรายงานการสอบทานของ ค.ต.ป.กก....", keywords: ["รายงานการสอบทาน", "สอบทาน", "รายงานผลการดำเนินงาน ค.ต.ป.กก."] },
+        7: { name: "7. จัดทำรายงานการประชุม วาระการประชุมของ ค.ต.ป.กก.", keywords: ["รายงานการประชุม", "วาระการประชุม", "จดรายงาน"] },
+        8: { name: "8. สนับสนุนการจัดทำ Infographic แผ่นพับ แบนเนอร์...", keywords: ["infographic", "อินโฟกราฟิก", "แผ่นพับ", "แบนเนอร์", "คลิปวิดีโอ", "สื่อ", "ออกแบบ"] },
+        9: { name: "9. ติดต่อประสานงานหน่วยงานภายในและภายนอก...", keywords: ["ติดต่อประสานงาน", "ประสานงาน", "โทรศัพท์ประสาน", "หน่วยงานภายใน"] },
+        10: { name: "10. สนับสนุนการจัดการประชุม ค.ต.ป.กก. ประจำเดือน...", keywords: ["จัดการประชุม", "จัดประชุม ค.ต.ป.กก.", "ร่วมกับผู้บริหาร"] },
+        11: { name: "11. ปฏิบัติงานหรือสนับสนุนการปฏิบัติงานอื่นๆ...", keywords: ["อื่นๆ", "ได้รับมอบหมาย", "งานอื่น"] }
+    };
+    const monthNamesThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกรฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    let dailyRecords = []; 
+    let customHolidays = [];
+    let currentViewingYearMonth = new Date().toISOString().substring(0, 7);
+    
+    let selectedExcelDates = [];
+    let isExplicitlyCleared = false;
+    let hasInitializedHistoryFilter = false;
+
+    onValue(ref(db, 'dailyRecords'), (snapshot) => {
+        dailyRecords = [];
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).forEach(key => {
+                dailyRecords.push({ key: key, ...data[key] });
+            });
+        }
+        document.getElementById('saveStatus').innerHTML = `<i class="fa-solid fa-circle-check" style="color: #48bb78;"></i> ระบบ Cloud ออนไลน์ (${dailyRecords.length} รายการ)`;
+        
+        updateHistoryMonthDropdownOptions();
+        renderAllTables();
+        checkSelectedDateValidity(); 
+    });
+
+    onValue(ref(db, 'customHolidays'), (snapshot) => {
+        customHolidays = [];
+        const data = snapshot.val();
+        if (data) {
+            customHolidays = Object.values(data);
+        }
+        renderAllTables();
+        checkSelectedDateValidity(); 
+    });
+
+    function isDateHoliday(dateString) {
+        if (!dateString) return false;
+        const checkDate = new Date(dateString);
+        if (isNaN(checkDate.getTime())) return false;
+        if (checkDate.getDay() === 0 || checkDate.getDay() === 6) return true;
+        if (customHolidays.includes(dateString)) return true;
+        return false;
+    }
+
+    function checkSelectedDateValidity() {
+        const dateInput = document.getElementById('workDate');
+        const submitBtn = document.getElementById('btnSubmit');
+        const alertBox = document.getElementById('liveDateAlertBox');
+        const alertIcon = document.getElementById('liveDateIcon');
+        const alertMsg = document.getElementById('liveDateMsg');
+        const editKey = document.getElementById('editKey').value;
+
+        if (isDateHoliday(dateInput.value)) {
+            alertBox.className = "status-alert-box alert-danger-mode";
+            alertIcon.className = "fa-solid fa-triangle-exclamation";
+            alertMsg.innerText = "วันหยุดราชการ / เสาร์-อาทิตย์ (ล็อกไม่ให้บันทึกงาน)";
+            submitBtn.disabled = true;
+            if (editKey === "-1") {
+                submitBtn.innerHTML = `<i class="fa-solid fa-ban"></i> ไม่สามารถบันทึกงานในวันหยุดได้`;
+            } else {
+                submitBtn.innerHTML = `<i class="fa-solid fa-ban"></i> ไม่สามารถอัปเดตงานในวันหยุดได้`;
+            }
+        } else {
+            alertBox.className = "status-alert-box alert-success-mode";
+            alertIcon.className = "fa-solid fa-circle-check";
+            alertMsg.innerText = "วันทำการปกติ (สามารถบันทึกภาระงานได้)";
+            submitBtn.disabled = false;
+            if (editKey === "-1") {
+                submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> บันทึกขึ้นระบบ Cloud`;
+                submitBtn.style.backgroundColor = "#3182ce";
+            } else {
+                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ยืนยันการอัปเดตบน Cloud`;
+                submitBtn.style.backgroundColor = "#d69e2e";
+            }
+        }
+    }
+
+    window.handleDateChange = function() {
+        const selectedDate = document.getElementById('workDate').value;
+        currentViewingYearMonth = selectedDate.substring(0, 7);
+        document.getElementById('customHolidayInput').value = selectedDate;
+        
+        const histFilter = document.getElementById('historyMonthFilter');
+        if (histFilter) {
+            histFilter.value = currentViewingYearMonth;
+        }
+        
+        resetExcelFilterState(); 
+        renderAllTables();
+        checkSelectedDateValidity();
+    }
+
+    window.saveTaskRow = function() {
+        const dateVal = document.getElementById('workDate').value;
+        const detail = document.getElementById('taskDetail').value;
+        const taskId = document.getElementById('monthlyTaskID').value;
+        const assigned = parseInt(document.getElementById('taskAssigned').value) || 0;
+        const delivered = parseInt(document.getElementById('taskDelivered').value) || 0;
+        const editKey = document.getElementById('editKey').value;
+
+        if(isDateHoliday(dateVal)) {
+            alert("ระบบไม่อนุญาตให้บันทึกภาระงานลงในวันหยุดราชการครับ");
+            return;
+        }
+        if(!detail) { alert("กรุณากรอกรายละเอียดงานก่อนครับ!"); return; }
+
+        const rowData = { date: dateVal, detail: detail, taskId: taskId, assigned: assigned, delivered: delivered };
+
+        if (editKey === "-1") {
+            push(ref(db, 'dailyRecords'), rowData);
+        } else {
+            update(ref(db, `dailyRecords/${editKey}`), rowData);
+            document.getElementById('editKey').value = "-1";
+        }
+
+        currentViewingYearMonth = dateVal.substring(0, 7);
+        const histFilter = document.getElementById('historyMonthFilter');
+        if (histFilter) histFilter.value = currentViewingYearMonth;
+
+        document.getElementById('taskDetail').value = "";
+        checkSelectedDateValidity();
+    }
+
+    window.editRecord = function(key) {
+        const target = dailyRecords.find(item => item.key === key);
+        if(!target) return;
+        document.getElementById('workDate').value = target.date;
+        document.getElementById('taskDetail').value = target.detail;
+        document.getElementById('monthlyTaskID').value = target.taskId;
+        document.getElementById('taskAssigned').value = target.assigned;
+        document.getElementById('taskDelivered').value = target.delivered;
+        document.getElementById('editKey').value = key;
+        checkSelectedDateValidity();
+        document.getElementById('taskDetail').focus();
+    }
+
+    window.deleteRecord = function(key) {
+        if (confirm("คุณต้องการลบรายการบันทึกงานนี้ออกจากคลาวด์ ใช่หรือไม่?")) {
+            remove(ref(db, `dailyRecords/${key}`));
+        }
+    }
+
+    window.addCustomHoliday = function() {
+        const holidayVal = document.getElementById('customHolidayInput').value;
+        if (!holidayVal) return;
+        if (customHolidays.includes(holidayVal)) {
+            alert("วันที่นี้ถูกกำหนดเป็นวันหยุดอยู่แล้วครับ");
+            return;
+        }
+        push(ref(db, 'customHolidays'), holidayVal).then(() => {
+            checkSelectedDateValidity();
+        });
+    }
+
+    window.removeCustomHoliday = function(dateStr) {
+        onValue(ref(db, 'customHolidays'), (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                Object.keys(data).forEach(k => {
+                    if(data[k] === dateStr) {
+                        remove(ref(db, `customHolidays/${k}`)).then(() => {
+                            checkSelectedDateValidity();
+                        });
+                    }
+                });
+            }
+        }, { onlyOnce: true });
+    }
+
+    window.clearAllData = function() {
+        if(confirm("🚨 คำเตือนสูงสุด: คุณต้องการลบข้อมูลงานทั้งหมดออกจากระบบ Cloud ใช่หรือไม่?")) {
+            remove(ref(db, 'dailyRecords'));
+            remove(ref(db, 'customHolidays'));
+            hasInitializedHistoryFilter = false;
+        }
+    }
+
+    window.selectMonthTab = function(yearMonthStr) {
+        currentViewingYearMonth = yearMonthStr;
+        let targetDay = 1;
+        let testDate = `${yearMonthStr}-01`;
+        while (isDateHoliday(testDate) && targetDay <= 28) {
+            targetDay++;
+            testDate = `${yearMonthStr}-${String(targetDay).padStart(2, '0')}`;
+        }
+        document.getElementById('workDate').value = testDate;
+        document.getElementById('customHolidayInput').value = testDate;
+        
+        const histFilter = document.getElementById('historyMonthFilter');
+        if (histFilter) histFilter.value = yearMonthStr;
+
+        resetExcelFilterState(); 
+        renderAllTables();
+        checkSelectedDateValidity();
+    }
+
+    function resetExcelFilterState() {
+        selectedExcelDates = [];
+        isExplicitlyCleared = false;
+    }
+
+    window.autoMatchTask = function() {
+        const text = document.getElementById('taskDetail').value.toLowerCase();
+        if(!text) return;
+        for (let id in monthlyTasks) {
+            let match = monthlyTasks[id].keywords.some(keyword => text.includes(keyword.toLowerCase()));
+            if (match) {
+                document.getElementById('monthlyTaskID').value = id;
+                break;
+            }
+        }
+    }
+
+    function updateHistoryMonthDropdownOptions() {
+        const histFilter = document.getElementById('historyMonthFilter');
+        if (!histFilter) return;
+
+        let monthSet = new Set();
+        dailyRecords.forEach(item => {
+            if(item.date) monthSet.add(item.date.substring(0, 7));
+        });
+        monthSet.add(new Date().toISOString().substring(0, 7)); 
+        let sortedMonths = Array.from(monthSet).sort();
+
+        const previousSelectedValue = histFilter.value || currentViewingYearMonth;
+        histFilter.innerHTML = '';
+        histFilter.innerHTML += `<option value="ALL_MONTHS">แสดงประวัติงานทุกเดือนทั้งหมด</option>`;
+
+        sortedMonths.forEach(ym => {
+            const ymParts = ym.split('-');
+            const yThai = parseInt(ymParts[0]) + 543;
+            const mText = monthNamesThai[parseInt(ymParts[1]) - 1];
+            histFilter.innerHTML += `<option value="${ym}">${mText} ${yThai}</option>`;
+        });
+
+        if (!hasInitializedHistoryFilter) {
+            histFilter.value = currentViewingYearMonth;
+            hasInitializedHistoryFilter = true;
+        } else {
+            histFilter.value = previousSelectedValue;
+        }
+    }
+
+    window.renderDailyTableOnly = function() {
+        const histFilter = document.getElementById('historyMonthFilter');
+        const selectedMonth = histFilter.value;
+        const dailyBody = document.getElementById('dailyTableBody');
+        dailyBody.innerHTML = '';
+
+        let filteredHistoryRecords = [...dailyRecords];
+        if (selectedMonth !== "ALL_MONTHS") {
+            filteredHistoryRecords = dailyRecords.filter(item => item.date && item.date.substring(0, 7) === selectedMonth);
+        }
+
+        if (filteredHistoryRecords.length === 0) {
+            dailyBody.innerHTML = `<tr><td colspan="6" style="color:#a0aec0; padding:15px;">ไม่มีข้อมูลประวัติการบันทึกในเดือนนี้</td></tr>`;
+            return;
+        }
+
+        const sortedRecordsAll = filteredHistoryRecords.sort((a,b) => new Date(b.date) - new Date(a.date));
+        sortedRecordsAll.forEach((item) => {
+            dailyBody.innerHTML += `
+                <tr>
+                    <td>${formatDate(item.date)}</td>
+                    <td class="text-left">${item.detail}</td>
+                    <td><span class="badge matched">ข้อ ${item.taskId}</span></td>
+                    <td>${item.assigned}</td>
+                    <td>${item.delivered}</td>
+                    <td>
+                        <button class="btn-action btn-edit" onclick="editRecord('${item.key}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-action btn-delete" onclick="deleteRecord('${item.key}')"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    window.toggleExcelDropdown = function(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('excelFilterDropdown');
+        const isDisplayed = dropdown.style.display === 'block';
+        dropdown.style.display = isDisplayed ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', function() {
+        const dropdown = document.getElementById('excelFilterDropdown');
+        if(dropdown) dropdown.style.display = 'none';
+    });
+
+    window.buildExcelFilterMenu = function(availableDates) {
+        const dropdown = document.getElementById('excelFilterDropdown');
+        if(!dropdown) return;
+
+        dropdown.innerHTML = '';
+        if(availableDates.length === 0) {
+            dropdown.innerHTML = '<div style="font-size:11px; padding:5px; color:#a0aec0; text-align:center;">ไม่มีข้อมูลให้คัดกรอง</div>';
+            return;
+        }
+
+        const isAllChecked = !isExplicitlyCleared && (selectedExcelDates.length === 0 || selectedExcelDates.length === availableDates.length);
+        dropdown.innerHTML += `
+            <div class="excel-dropdown-item" onclick="event.stopPropagation(); toggleExcelSelectAll(${JSON.stringify(availableDates).replace(/"/g, '&quot;')}, ${isAllChecked})">
+                <input type="checkbox" ${isAllChecked ? 'checked' : ''}>
+                <strong>(Select All / แสดงทั้งหมด)</strong>
+            </div>
+            <div class="excel-dropdown-divider"></div>
+        `;
+
+        availableDates.forEach(dateStr => {
+            const isChecked = isAllChecked || selectedExcelDates.includes(dateStr);
+            dropdown.innerHTML += `
+                <div class="excel-dropdown-item" onclick="event.stopPropagation(); toggleExcelDateItem('${dateStr}', ${JSON.stringify(availableDates).replace(/"/g, '&quot;')})">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''}>
+                    <span>${formatDate(dateStr)}</span>
+                </div>
+            `;
+        });
+        
+        const filterBtn = document.getElementById('excelFilterBtn');
+        if(selectedExcelDates.length > 0 || isExplicitlyCleared) {
+            filterBtn.classList.add('active-filter');
+        } else {
+            filterBtn.classList.remove('active-filter');
+        }
+    }
+
+    window.toggleExcelSelectAll = function(availableDates, currentIsAllChecked) {
+        if(currentIsAllChecked) {
+            selectedExcelDates = ["CLEAR_ALL_ACTIVE"]; 
+            isExplicitlyCleared = true;
+        } else {
+            selectedExcelDates = [];
+            isExplicitlyCleared = false;
+        }
+        const { month, year } = getMonthDetails(currentViewingYearMonth);
+        buildExcelFilterMenu(availableDates);
+        renderBottomDailySummaryTable(year, month);
+    }
+
+    window.toggleExcelDateItem = function(dateStr, availableDates) {
+        if(!isExplicitlyCleared && selectedExcelDates.length === 0) {
+            selectedExcelDates = [...availableDates];
+        }
+        selectedExcelDates = selectedExcelDates.filter(d => d !== "CLEAR_ALL_ACTIVE");
+        isExplicitlyCleared = false;
+
+        if(selectedExcelDates.includes(dateStr)) {
+            selectedExcelDates = selectedExcelDates.filter(d => d !== dateStr);
+        } else {
+            selectedExcelDates.push(dateStr);
+        }
+
+        if(selectedExcelDates.length === availableDates.length) {
+            selectedExcelDates = [];
+        } else if(selectedExcelDates.length === 0) {
+            selectedExcelDates = ["CLEAR_ALL_ACTIVE"];
+            isExplicitlyCleared = true;
+        }
+
+        const { month, year } = getMonthDetails(currentViewingYearMonth);
+        buildExcelFilterMenu(availableDates);
+        renderBottomDailySummaryTable(year, month);
+    }
+
+    function formatDate(dateStr) {
+        if(!dateStr) return "";
+        const parts = dateStr.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function getMonthDetails(yearMonthString) {
+        const parts = yearMonthString.split('-');
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; 
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const holidays = [];
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            const checkDate = new Date(year, month, d);
+            if (checkDate.getDay() === 0 || checkDate.getDay() === 6) {
+                holidays.push(d);
+            } else {
+                const formattedCheck = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                if (customHolidays.includes(formattedCheck)) {
+                    holidays.push(d);
+                }
+            }
+        }
+        return { daysInMonth, holidays, month, year };
+    }
+
+    function renderMonthTabs() {
+        const tabsContainer = document.getElementById('monthTabs');
+        tabsContainer.innerHTML = '';
+        let monthSet = new Set();
+        dailyRecords.forEach(item => {
+            if(item.date) monthSet.add(item.date.substring(0, 7));
+        });
+        monthSet.add(currentViewingYearMonth);
+        let sortedMonths = Array.from(monthSet).sort();
+
+        sortedMonths.forEach(ym => {
+            const ymParts = ym.split('-');
+            const yThai = parseInt(ymParts[0]) + 543;
+            const mText = monthNamesThai[parseInt(ymParts[1]) - 1];
+            const isActive = ym === currentViewingYearMonth ? 'active' : '';
+            tabsContainer.innerHTML += `
+                <button class="month-tab ${isActive}" onclick="selectMonthTab('${ym}')">
+                    <i class="fa-solid fa-calendar-check"></i> ${mText} ${yThai}
+                </button>
+            `;
+        });
+    }
+
+    function renderAllTables() {
+        renderMonthTabs();
+        const { daysInMonth, holidays, month, year } = getMonthDetails(currentViewingYearMonth);
+        
+        document.getElementById('monthlyTitleText').innerText = `(${monthNamesThai[month]} พ.ศ. ${year + 543})`;
+
+        // ==========================================
+        // 🛠️ ส่วนที่แก้ไข: ปรับรูปแบบแสดงผลป้ายวันหยุดเป็น วัน/เดือน/ปี พ.ศ.
+        // ==========================================
+        const container = document.getElementById('holidayTagsContainer');
+        container.innerHTML = '';
+        const filteredHolidays = customHolidays.filter(d => {
+            const dateObj = new Date(d);
+            return dateObj.getFullYear() === year && dateObj.getMonth() === month;
+        }).sort();
+        
+        if (filteredHolidays.length === 0) {
+            container.innerHTML = '<span style="font-size:12px; color:#a0aec0;">ยังไม่มีวันหยุดพิเศษที่กำหนดเองในเดือนนี้</span>';
+        } else {
+            filteredHolidays.forEach(dateStr => {
+                const parts = dateStr.split('-'); // ["YYYY", "MM", "DD"]
+                const day = parts[2];
+                const mStr = parts[1];
+                const yThaiShort = parseInt(parts[0]) + 543;
+                
+                // จัดเรียงฟอร์แมตป้ายวันหยุดเป็น วัน/เดือน/ปี พ.ศ. เช่น 05/07/2569
+                const formattedThaiTag = `${day}/${mStr}/${yThaiShort}`;
+                
+                container.innerHTML += `<span class="holiday-tag">${formattedThaiTag} <i class="fa-solid fa-circle-xmark" onclick="removeCustomHoliday('${dateStr}')"></i></span>`;
+            });
+        }
+
+        renderDailyTableOnly();
+
+        let currentMonthAssignedTotal = 0;
+        let currentMonthDeliveredTotal = 0;
+        let monthlyMatrix = {};
+        let dailyTotals = {}; 
+
+        for(let d = 1; d <= daysInMonth; d++) {
+            dailyTotals[d] = { assigned: 0, delivered: 0 };
+            monthlyMatrix[d] = {};
+            for(let t = 1; t <= 11; t++) {
+                monthlyMatrix[d][t] = { assigned: 0, delivered: 0 };
+            }
+        }
+
+        dailyRecords.forEach(item => {
+            const itemDate = new Date(item.date);
+            if(itemDate.getFullYear() === year && itemDate.getMonth() === month) {
+                const dayNum = itemDate.getDate();
+                if(dayNum >= 1 && dayNum <= daysInMonth) {
+                    monthlyMatrix[dayNum][item.taskId].assigned += item.assigned;
+                    monthlyMatrix[dayNum][item.taskId].delivered += item.delivered;
+                    dailyTotals[dayNum].assigned += item.assigned;
+                    dailyTotals[dayNum].delivered += item.delivered;
+                    currentMonthAssignedTotal += item.assigned;
+                    currentMonthDeliveredTotal += item.delivered;
+                }
+            }
+        });
+
+        document.getElementById('totalAssignedNum').innerText = currentMonthAssignedTotal + " ชิ้น";
+        document.getElementById('totalDeliveredNum').innerText = currentMonthDeliveredTotal + " ชิ้น";
+
+        const headerDays = document.getElementById('headerRowDays');
+        const headerStatus = document.getElementById('headerRowStatus');
+        headerDays.innerHTML = '<th rowspan="2" class="freeze-col" style="min-width: 320px; text-align: left; padding-left: 15px;">ภาระงานที่มอบหมาย / ประจำวัน</th>';
+        headerStatus.innerHTML = '';
+        for(let i = 1; i <= daysInMonth; i++) {
+            const isHoliday = holidays.includes(i);
+            const holidayClass = isHoliday ? 'class="holiday-cell"' : '';
+            headerDays.innerHTML += `<th colspan="2" ${holidayClass}>วันที่ ${i}</th>`;
+            headerStatus.innerHTML += `<th ${holidayClass}>มอบ</th><th ${holidayClass}>ส่ง</th>`;
+        }
+
+        const tbody = document.getElementById('monthlyTableBody');
+        tbody.innerHTML = '';
+        for(let t = 1; t <= 11; t++) {
+            let rowHTML = `<tr><td class="text-left freeze-col" style="font-weight: bold;">${monthlyTasks[t].name}</td>`;
+            for(let d = 1; d <= daysInMonth; d++) {
+                if (holidays.includes(d)) {
+                    rowHTML += `<td class="holiday-cell">✖</td><td class="holiday-cell">✖</td>`;
+                } else {
+                    let assignedVal = monthlyMatrix[d][t].assigned;
+                    let deliveredVal = monthlyMatrix[d][t].delivered;
+                    rowHTML += `<td>${assignedVal || ' '}</td><td>${deliveredVal || ' '}</td>`;
+                }
+            }
+            rowHTML += `</tr>`;
+            tbody.innerHTML += rowHTML;
+        }
+
+        let totalRowHTML = `<tr class="total-row"><td class="text-left freeze-col" style="padding-left: 15px;"><i class="fa-solid fa-calculator"></i> รวมผลงานสะสม (รายวัน)</td>`;
+        for(let d = 1; d <= daysInMonth; d++) {
+            if (holidays.includes(d)) {
+                totalRowHTML += `<td class="holiday-cell">✖</td><td class="holiday-cell">✖</td>`;
+            } else {
+                let dayAssigned = dailyTotals[d].assigned;
+                let dayDelivered = dailyTotals[d].delivered;
+                totalRowHTML += `<td style="${dayAssigned > 0 ? 'color: #3182ce;' : ''}">${dayAssigned || '0'}</td>`;
+                totalRowHTML += `<td style="${dayDelivered > 0 ? 'color: #38a169;' : ''}">${dayDelivered || '0'}</td>`;
+            }
+        }
+        totalRowHTML += `</tr>`;
+        tbody.innerHTML += totalRowHTML;
+
+        renderBottomDailySummaryTable(year, month);
+    }
+
+    function renderBottomDailySummaryTable(filterYear, filterMonth) {
+        const bottomBody = document.getElementById('bottomDailySummaryBody');
+        bottomBody.innerHTML = '';
+        
+        let filteredRecords = dailyRecords.filter(item => {
+            const d = new Date(item.date);
+            return d.getFullYear() === filterYear && d.getMonth() === filterMonth;
+        });
+        
+        let availableDates = [...new Set(filteredRecords.map(item => item.date))].sort();
+        buildExcelFilterMenu(availableDates);
+        
+        if (isExplicitlyCleared) {
+            bottomBody.innerHTML = `<tr><td colspan="5" style="color: #a0aec0; padding: 20px;">กรุณาคลิกเลือกวันที่ต้องการตรวจสอบข้อมูลจากเมนูตัวกรอง Dropdown</td></tr>`;
+            return;
+        } else if (selectedExcelDates.length > 0) {
+            filteredRecords = filteredRecords.filter(item => {
+                return selectedExcelDates.includes(item.date);
+            });
+        }
+        
+        if(filteredRecords.length === 0) {
+            bottomBody.innerHTML = `<tr><td colspan="5" style="color: #a0aec0; padding: 20px;">ไม่พบข้อมูลผลการปฏิบัติงาน</td></tr>`;
+            return;
+        }
+        
+        const sortedRecords = filteredRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+        sortedRecords.forEach(item => {
+            const itemDate = new Date(item.date);
+            const { holidays } = getMonthDetails(currentViewingYearMonth);
+            const isHoliday = holidays.includes(itemDate.getDate());
+            bottomBody.innerHTML += `
+                <tr ${isHoliday ? 'class="holiday-bg"' : ''}>
+                    <td><strong>${formatDate(item.date)}</strong></td>
+                    <td><span class="badge" style="background-color: #ebf8ff; color: #2b6cb0;">ข้อที่ ${item.taskId}</span></td>
+                    <td class="text-left" style="font-size: 13px;">${item.detail}</td>
+                    <td style="font-weight: bold; color: #3182ce;">${item.assigned}</td>
+                    <td style="font-weight: bold; color: #38a169;">${item.delivered}</td>
+                </tr>
+            `;
+        });
+    }
+
+    window.exportToGoogleSheets = function() {
+        const histFilter = document.getElementById('historyMonthFilter');
+        let selectedMonthStr = histFilter.value;
+        
+        if (selectedMonthStr === "ALL_MONTHS") {
+            selectedMonthStr = currentViewingYearMonth;
+        }
+        
+        const parts = selectedMonthStr.split('-');
+        const targetYear = parseInt(parts[0]);
+        const targetMonth = parseInt(parts[1]) - 1;
+
+        const filteredRecords = dailyRecords.filter(item => {
+            const d = new Date(item.date);
+            return d.getFullYear() === targetYear && d.getMonth() === targetMonth;
+        });
+
+        if(filteredRecords.length === 0) {
+            alert(`ไม่พบข้อมูลที่จะส่งออกในเดือน ${monthNamesThai[targetMonth]} พ.ศ. ${targetYear + 543} ครับ`);
+            return;
+        }
+
+        const sortedRecords = filteredRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+        let csvContent = "\ufeffวันที่ปฏิบัติงาน,เชื่อมโยงข้อรายงานรายเดือน,รายละเอียดภาระงานที่ปฏิบัติจริง,จำนวนงานที่มอบ,จำนวนงานที่ส่งมอบ\n";
+        let totalAssigned = 0; let totalDelivered = 0;
+        
+        sortedRecords.forEach(item => {
+            totalAssigned += item.assigned; totalDelivered += item.delivered;
+            csvContent += `${formatDate(item.date)},ข้อที่ ${item.taskId},"${item.detail.replace(/"/g, '""')}",${item.assigned},${item.delivered}\n`;
+        });
+        
+        csvContent += `,,รวมผลงานสะสมตลอดทั้งเดือนนี้,${totalAssigned},${totalDelivered}\n`;
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", `รายงานผลงาน_${monthNamesThai[targetMonth]}_${targetYear+543}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    const initialDate = new Date().toISOString().substring(0, 10);
+    document.getElementById('workDate').value = initialDate;
+    document.getElementById('customHolidayInput').value = initialDate;
+</script>
+</body>
+</html>
