@@ -20,6 +20,19 @@
         .card { background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; margin-bottom: 25px; }
         label { font-weight: bold; display: block; margin-bottom: 8px; color: #4a5568; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 15px; -webkit-appearance: none; appearance: none; background-color: #fff; }
+
+        /* 📐 ล็อกขนาดช่อง "รายละเอียดงานที่ได้รับมอบหมาย" ให้เท่ากับคอลัมน์ "งานที่มอบหมาย" ในตาราง Word
+           คอลัมน์ใน Word กว้าง 5670 dxa (twips) = 5670/1440 นิ้ว = 378px ที่ 96dpi
+           ฟอนต์ใน Word คือ TH SarabunIT๙ ขนาด 16pt (32 half-pt) ≈ 21px บนเว็บ
+           เพื่อให้ตัวอักษรตกบรรทัดในหน้าเว็บใกล้เคียงกับใน Word มากที่สุด */
+        #taskDetail {
+            width: 378px;
+            max-width: 100%;
+            font-family: 'Sarabun', 'TH SarabunPSK', 'Tahoma', sans-serif;
+            font-size: 21px;
+            line-height: 1.35;
+            resize: vertical;
+        }
         
         .btn-prime { background-color: #3182ce; color: white; border: none; padding: 14px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-prime:hover { background-color: #2b6cb0; }
@@ -189,11 +202,12 @@
         <div class="card">
             <div class="history-header">
                 <h3><i class="fa-solid fa-list-check"></i> รายการบันทึกบน Cloud</h3>
-                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
                     <button class="btn-sheet" onclick="exportToGoogleSheets()"><i class="fa-solid fa-file-excel"></i> Excel</button>
                     <button class="btn-word" onclick="exportToWord()"><i class="fa-solid fa-file-word"></i> Word</button>
                     <button class="btn-word" style="background-color: #234e8a;" onclick="exportToWordMonthly()"><i class="fa-solid fa-file-word"></i> Word ทั้งเดือน</button>
-                    <button class="btn-danger" onclick="clearAllData()"><i class="fa-solid fa-trash-can"></i> ล้างทั้งหมด</button>
+                    <span style="width: 1px; height: 28px; background-color: #e2e8f0; margin: 0 6px;"></span>
+                    <button class="btn-danger" style="background-color: transparent; color: #e53e3e; border: 1px solid #feb2b2;" onclick="clearAllData()"><i class="fa-solid fa-trash-can"></i> ล้างทั้งหมด</button>
                 </div>
             </div>
 
@@ -313,7 +327,7 @@
         10: { name: "10. สนับสนุนการจัดการประชุม ค.ต.ป.กก. ประจำเดือน...", keywords: ["จัดการประชุม", "จัดประชุม ค.ต.ป.กก.", "ร่วมกับผู้บริหาร"] },
         11: { name: "11. ปฏิบัติงานหรือสนับสนุนการปฏิบัติงานอื่นๆ...", keywords: ["อื่นๆ", "ได้รับมอบหมาย", "งานอื่น"] }
     };
-    const monthNamesThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกรฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    const monthNamesThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     let dailyRecords = []; 
     let customHolidays = [];
@@ -420,6 +434,7 @@
         if(!detail) { alert("กรุณากรอกรายละเอียดงานก่อนครับ!"); return; }
 
         const rowData = { date: dateVal, detail: detail, taskId: taskId, assigned: assigned, delivered: delivered };
+        const isEditing = editKey !== "-1";
 
         if (editKey === "-1") {
             push(ref(db, 'dailyRecords'), rowData);
@@ -434,6 +449,30 @@
 
         document.getElementById('taskDetail').value = "";
         checkSelectedDateValidity();
+        showSaveToast(isEditing ? "✅ แก้ไขข้อมูลเรียบร้อยแล้ว" : "✅ บันทึกข้อมูลขึ้น Cloud เรียบร้อยแล้ว");
+    }
+
+    // 🔔 Toast แจ้งเตือนเมื่อบันทึก/แก้ไขสำเร็จ (ไม่บล็อกการทำงาน หายไปเองใน 2.2 วินาที)
+    let saveToastTimer = null;
+    window.showSaveToast = function(message) {
+        let toast = document.getElementById('saveToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'saveToast';
+            toast.style.cssText = 'position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background-color:#2f855a; color:#fff; padding:12px 22px; border-radius:8px; font-size:15px; box-shadow:0 4px 14px rgba(0,0,0,0.18); z-index:9999; opacity:0; transition: opacity 0.25s ease, transform 0.25s ease; pointer-events:none; text-align:center; max-width:90vw;';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        clearTimeout(saveToastTimer);
+        // trigger reflow ก่อนเล่น transition
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        });
+        saveToastTimer = setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(20px)';
+        }, 2200);
     }
 
     window.editRecord = function(key) {
@@ -483,10 +522,14 @@
     }
 
     window.clearAllData = function() {
-        if(confirm("🚨 คำเตือนสูงสุด: คุณต้องการลบข้อมูลงานทั้งหมดออกจากระบบ Cloud ใช่หรือไม่?")) {
+        const confirmWord = prompt("🚨 คำเตือนสูงสุด: การกระทำนี้จะลบข้อมูลงานและวันหยุดทั้งหมดออกจากระบบ Cloud อย่างถาวร และไม่สามารถกู้คืนได้\n\nหากต้องการดำเนินการต่อ กรุณาพิมพ์คำว่า \"ลบทั้งหมด\" แล้วกดตกลง");
+        if (confirmWord === "ลบทั้งหมด") {
             remove(ref(db, 'dailyRecords'));
             remove(ref(db, 'customHolidays'));
             hasInitializedHistoryFilter = false;
+            alert("🗑️ ลบข้อมูลทั้งหมดเรียบร้อยแล้วครับ");
+        } else if (confirmWord !== null) {
+            alert("ข้อความยืนยันไม่ตรงกัน ยกเลิกการลบข้อมูลครับ");
         }
     }
 
