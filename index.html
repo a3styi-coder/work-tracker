@@ -129,9 +129,26 @@
             .summary-number { font-size: 22px; }
             .holiday-form-group { flex-direction: column; }
             .history-header { flex-direction: column; align-items: flex-start; }
-            .history-header div { display: flex; width: 100%; gap: 8px; }
-            .history-header div button { flex: 1; justify-content: center; padding: 12px 10px; font-size: 13px; }
+            .history-header div { display: flex; width: 100%; gap: 8px; flex-wrap: wrap; }
+            .history-header div button { flex: 1 1 100%; min-width: 0; justify-content: center; padding: 12px 10px; font-size: 14px; white-space: nowrap; }
             .btn-action { padding: 6px 10px; font-size: 12px; }
+
+            /* ป้องกัน iOS Safari ซูมจอเข้าอัตโนมัติเวลาแตะกรอกข้อมูล (ต้องใช้ font-size ขั้นต่ำ 16px) */
+            input, select, textarea { font-size: 16px; }
+
+            /* ซ่อนเส้นคั่นปุ่ม "ล้างทั้งหมด" บนมือถือ แล้วให้มันขึ้นบรรทัดใหม่แบบเต็มความกว้างแทน เพื่อไม่ให้กดพลาดง่าย */
+            .history-header div > span { display: none; }
+            .history-header div button[onclick="clearAllData()"] { flex-basis: 100%; margin-top: 4px; }
+
+            /* จำกัดความกว้าง dropdown ตัวกรอง Excel ไม่ให้ล้นขอบจอมือถือ */
+            .excel-dropdown { left: 50%; right: auto; width: 85vw; max-width: 260px; }
+
+            /* เพิ่มพื้นที่แตะ (touch target) ให้ปุ่มเดือนและแท็บต่างๆ ใช้งานสะดวกขึ้นบนมือถือ */
+            .month-tab { padding: 10px 14px; font-size: 13px; }
+            .holiday-tag { padding: 8px 14px; font-size: 13px; }
+
+            /* การ์ดฟอร์มกรอกงาน ให้ปุ่มบันทึกใหญ่ขึ้นเล็กน้อยเพื่อแตะง่าย */
+            .btn-prime { padding: 16px 20px; font-size: 16px; }
         }
     </style>
 </head>
