@@ -100,6 +100,7 @@
         .status-alert-box { padding: 12px 15px; border-radius: 6px; font-weight: bold; font-size: 13px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .alert-danger-mode { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
         .alert-success-mode { background-color: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+        .alert-warning-mode { background-color: #fffaf0; color: #dd6b20; border: 1px solid #fbd38d; }
 
         .sticky-table { border-collapse: separate; border-spacing: 0; min-width: 1200px; }
         .sticky-table th, .sticky-table td { border: 1px solid #cbd5e0; }
@@ -270,6 +271,11 @@
                 <i class="fa-solid fa-circle-check fa-lg"></i> รวมงานที่ส่งมอบสำเร็จในเดือนที่เลือก
                 <span class="summary-number" id="totalDeliveredNum">0 ชิ้น</span>
             </div>
+        </div>
+
+        <div id="taskCompletionBox" class="status-alert-box alert-success-mode">
+            <i class="fa-solid fa-list-check fa-lg"></i>
+            <span id="taskCompletionMsg">กำลังตรวจสอบข้อมูล...</span>
         </div>
 
         <div class="scroll-table">
@@ -844,6 +850,32 @@
 
         document.getElementById('totalAssignedNum').innerText = currentMonthAssignedTotal + " ชิ้น";
         document.getElementById('totalDeliveredNum').innerText = currentMonthDeliveredTotal + " ชิ้น";
+
+        // ✅ ตรวจสอบว่าภาระงานที่มอบหมาย/ประจำวัน ครบทั้ง 11 ข้อในเดือนนี้หรือไม่
+        // (นับว่า "ทำแล้ว" เมื่อหัวข้อนั้นมีผลงานที่ส่งมอบ (delivered) มากกว่า 0 อย่างน้อย 1 ครั้งในเดือน)
+        let completedTaskIds = [];
+        let missingTaskIds = [];
+        for (let t = 1; t <= 11; t++) {
+            let taskDeliveredTotal = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                taskDeliveredTotal += monthlyMatrix[d][t].delivered;
+            }
+            if (taskDeliveredTotal > 0) {
+                completedTaskIds.push(t);
+            } else {
+                missingTaskIds.push(t);
+            }
+        }
+
+        const completionBox = document.getElementById('taskCompletionBox');
+        const completionMsg = document.getElementById('taskCompletionMsg');
+        if (completedTaskIds.length === 11) {
+            completionBox.className = 'status-alert-box alert-success-mode';
+            completionMsg.innerText = `✔ เดือนนี้ทำครบทั้ง 11 ข้อแล้ว (${completedTaskIds.length}/11 ข้อ)`;
+        } else {
+            completionBox.className = 'status-alert-box alert-warning-mode';
+            completionMsg.innerText = `⚠ เดือนนี้ทำได้ ${completedTaskIds.length}/11 ข้อ ยังไม่มีผลงานในข้อ: ${missingTaskIds.join(', ')}`;
+        }
 
         const headerDays = document.getElementById('headerRowDays');
         const headerStatus = document.getElementById('headerRowStatus');
